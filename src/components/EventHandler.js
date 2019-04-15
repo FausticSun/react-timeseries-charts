@@ -32,7 +32,8 @@ export default class EventHandler extends React.Component {
             isPanning: false,
             initialPanBegin: null,
             initialPanEnd: null,
-            initialPanPosition: null
+            initialPanPosition: null,
+            isCtrlDown: false
         };
 
         this.handleScrollWheel = this.handleScrollWheel.bind(this);
@@ -40,11 +41,22 @@ export default class EventHandler extends React.Component {
         this.handleMouseUp = this.handleMouseUp.bind(this);
         this.handleMouseOut = this.handleMouseOut.bind(this);
         this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.handleCtrlDown = this.handleCtrlDown.bind(this);
+        this.handleCtrlUp = this.handleCtrlUp.bind(this);
         this.handleContextMenu = this.handleContextMenu.bind(this);
     }
 
     componentDidMount() {
-        this.eventHandlerRef.addEventListener("wheel", this.handleScrollWheel, { passive: false });
+        this.eventHandlerRef.addEventListener("wheel", this.handleScrollWheel, {
+            passive: false
+        });
+        document.addEventListener("keydown", this.handleCtrlDown);
+        document.addEventListener("keyup", this.handleCtrlUp);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener("keydown", this.handleCtrlDown);
+        document.removeEventListener("keyup", this.handleCtrlUp);
     }
 
     // get the event mouse position relative to the event rect
@@ -137,7 +149,7 @@ export default class EventHandler extends React.Component {
         document.addEventListener("mouseover", this.handleMouseMove);
         document.addEventListener("mouseup", this.handleMouseUp);
 
-        if (this.props.enableDragZoom) {
+        if (this.props.enableDragZoom && !this.state.isCtrlDown) {
             const offsetxy = this.getOffsetMousePosition(e);
             this.setState({
                 isDragging: true,
@@ -146,7 +158,7 @@ export default class EventHandler extends React.Component {
             });
         }
 
-        if (this.props.enablePanZoom) {
+        if (this.props.enablePanZoom && this.state.isCtrlDown) {
             const x = e.pageX;
             const y = e.pageY;
             const xy0 = [Math.round(x), Math.round(y)];
@@ -278,6 +290,24 @@ export default class EventHandler extends React.Component {
         }
     }
 
+    handleCtrlDown(e) {
+        e.preventDefault();
+        if (e.key === "Control") {
+            this.setState({
+                isCtrlDown: true
+            });
+        }
+    }
+
+    handleCtrlUp(e) {
+        e.preventDefault();
+        if (e.key === "Control") {
+            this.setState({
+                isCtrlDown: false
+            });
+        }
+    }
+
     handleContextMenu(e) {
         var x = e.pageX;
         var y = e.pageY;
@@ -312,23 +342,30 @@ export default class EventHandler extends React.Component {
                     ref={c => {
                         this.eventRect = c;
                     }}
-                    style={{ fill: "#000", opacity: 0.0, cursor }}
+                    style={{
+                        fill: "#000",
+                        opacity: 0.0,
+                        cursor
+                    }}
                     x={0}
                     y={0}
                     width={this.props.width}
                     height={this.props.height}
-                />
-                {this.props.children}
+                />{" "}
+                {this.props.children}{" "}
                 {this.state.isDragging && (
                     <rect
-                        style={{ opacity: 0.3, fill: "grey" }}
+                        style={{
+                            opacity: 0.3,
+                            fill: "grey"
+                        }}
                         x={Math.min(this.state.currentDragZoom, this.state.initialDragZoom)}
                         y={0}
                         width={Math.abs(this.state.currentDragZoom - this.state.initialDragZoom)}
                         height={this.props.height}
                         pointerEvents="none"
                     />
-                )}
+                )}{" "}
             </g>
         );
     }
