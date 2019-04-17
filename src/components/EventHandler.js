@@ -291,7 +291,6 @@ export default class EventHandler extends React.Component {
     }
 
     handleCtrlDown(e) {
-        e.preventDefault();
         if (e.key === "Control") {
             this.setState({
                 isCtrlDown: true
@@ -300,7 +299,6 @@ export default class EventHandler extends React.Component {
     }
 
     handleCtrlUp(e) {
-        e.preventDefault();
         if (e.key === "Control") {
             this.setState({
                 isCtrlDown: false
